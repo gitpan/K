@@ -39,6 +39,7 @@
       },
       "runtime" : {
          "requires" : {
+            "Moose" : "0",
             "Sub::Exporter" : "0",
             "namespace::autoclean" : "0",
             "perl" : "5.010"
@@ -46,5 +47,5 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.01"
+   "version" : "0.02"
 }
