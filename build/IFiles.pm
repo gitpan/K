@@ -6,7 +6,7 @@ $self = {
                           'typemap'
                         ],
           'deps' => [],
-          'libs' => ''
+          'libs' => '-lpthread'
         };
 
 

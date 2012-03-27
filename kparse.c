@@ -3,17 +3,21 @@
  */
 #include "k.h"
 #include "kparse.h"
+#include <string.h>
 
 SV* sv_from_k(K k) {
+    SV* result;
     if (k->t < 0) {
-        return scalar_from_k(k);
+        result = scalar_from_k(k);
     }
     else if (k->t > 0) {
-        return vector_from_k(k);
+        result = vector_from_k(k);
     }
     else {
-        return mixed_list_from_k(k);
+        result = mixed_list_from_k(k);
     }
+
+    return result;
 }
 
 SV* scalar_from_k(K k) {
@@ -170,20 +174,28 @@ SV* dict_from_k(K k) {
     HV *hv = newHV();
     HE *store_ret;
 
-    AV* keys   = (AV*) SvRV( sv_from_k( kK(k)[0] ) );
-    AV* values = (AV*) SvRV( sv_from_k( kK(k)[1] ) );
+    SV* keys_ref = sv_from_k( kK(k)[0] );
+    SV* vals_ref = sv_from_k( kK(k)[1] );
+
+    AV* keys = (AV*) SvRV( keys_ref );
+    AV* vals = (AV*) SvRV( vals_ref );
 
     int key_count = av_len(keys) + 1;
 
     for (i = 0; i < key_count; i++) {
         key = av_fetch(keys, i, 0);
-        val = av_fetch(values, i, 0);
+        val = av_fetch(vals, i, 0);
 
         store_ret = hv_store_ent(hv, *key, *val, 0);
         if (store_ret == NULL) {
             croak("Failed to convert k hash entry to perl hash entry");
         }
+
+        SvREFCNT_inc(*val);
     }
+
+    SvREFCNT_dec(keys_ref);
+    SvREFCNT_dec(vals_ref);
 
     return (SV*)hv;
 }
@@ -209,38 +221,95 @@ SV* mixed_list_from_k(K k) {
  */
 
 SV* bool_from_k(K k) {
+    if (k->g == 0) {
+        return &PL_sv_undef;
+    }
+
     return newSViv( k->g );
 }
 
 SV* char_from_k(K k) {
+    if (k->g == 0) {
+        return &PL_sv_undef;
+    }
+
     char byte_str[1];
     byte_str[0] = k->g;
     return newSVpvn(byte_str, 1);
 }
 
 SV* short_from_k(K k) {
+    if (k->h == nh) {
+        return &PL_sv_undef;
+    }
+
+    if (k->h == wh) {
+        return newSVpvn("inf", 3);
+    }
+
+    if (k->h == -wh) {
+        return newSVpvn("-inf", 4);
+    }
+
     return newSViv(k->h);
 }
 
 SV* int_from_k(K k) {
+    if (k->i == ni) {
+        return &PL_sv_undef;
+    }
+
+    if (k->i == wi) {
+        return newSVpvn("inf", 3);
+    }
+
+    if (k->i == -wi) {
+        return newSVpvn("-inf", 4);
+    }
+
+    /* return SvREFCNT_inc(newSViv(k->i)); */
     return newSViv(k->i);
 }
 
 SV* long_from_k(K k) {
+    if (k->j == nj) {
+        return &PL_sv_undef;
+    }
+
+    if (k->j == wj) {
+        return newSVpvn("inf", 3);
+    }
+
+    if (k->j == -wj) {
+        return newSVpvn("-inf", 4);
+    }
+
     char buffer[33];
     snprintf(buffer, 33, "%Ld", k->j);
     return newSVpv(buffer, 0);
 }
 
 SV* real_from_k(K k) {
+    if (isnan(k->e)) {
+        return &PL_sv_undef;
+    }
+
     return newSVnv(k->e);
 }
 
 SV* float_from_k(K k) {
+    if (isnan(k->f)) {
+        return &PL_sv_undef;
+    }
+
     return newSVnv(k->f);
 }
 
 SV* symbol_from_k(K k) {
+    if (strncmp(k->s, "", k->n) == 0) {
+        return &PL_sv_undef;
+    }
+
     return newSVpv(k->s, 0);
 }
 
@@ -253,6 +322,11 @@ SV* bool_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (kG(k)[i] == 0) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
         av_push(av, newSViv( kG(k)[i]) );
     }
 
@@ -265,6 +339,11 @@ SV* byte_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (kG(k)[i] == 0) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
         byte_str[0] = kG(k)[i];
         av_push(av, newSVpvn(byte_str, 1));
     }
@@ -272,22 +351,26 @@ SV* byte_vector_from_k(K k) {
     return (SV*)av;
 }
 
-/* SV* char_vector_from_k(K k) { */
-/*     int i = 0; */
-/*     char str[k->n]; */
-/*  */
-/*     for (i = 0; i < k->n; i++) { */
-/*         str[i] = kG(k)[i]; */
-/*     } */
-/*  */
-/*     return newSVpvn(str, k->n); */
-/* } */
-
 SV* short_vector_from_k(K k) {
     AV *av = newAV();
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (kH(k)[i] == nh) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
+        if (kH(k)[i] == wh) {
+            av_push(av, newSVpvn("inf", 3));
+            continue;
+        }
+
+        if (kH(k)[i] == -wh) {
+            av_push(av, newSVpvn("-inf", 4));
+            continue;
+        }
+
         av_push(av, newSViv( kH(k)[i]) );
     }
 
@@ -299,6 +382,21 @@ SV* int_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (kI(k)[i] == ni) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
+        if (kI(k)[i] == wi) {
+            av_push(av, newSVpvn("inf", 3));
+            continue;
+        }
+
+        if (kI(k)[i] == -wi) {
+            av_push(av, newSVpvn("-inf", 4));
+            continue;
+        }
+
         av_push(av, newSViv( kI(k)[i]) );
     }
 
@@ -312,6 +410,21 @@ SV* long_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (kJ(k)[i] == nj) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
+        if (kJ(k)[i] == wj) {
+            av_push(av, newSVpvn("inf", 3));
+            continue;
+        }
+
+        if (kJ(k)[i] == -wj) {
+            av_push(av, newSVpvn("-inf", 4));
+            continue;
+        }
+
         snprintf(buffer, 33, "%Ld", kJ(k)[i]);
         av_push(av, newSVpv(buffer, 0) );
     }
@@ -324,6 +437,11 @@ SV* real_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (isnan( kE(k)[i] )) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
         av_push(av, newSVnv( kE(k)[i] ) );
     }
 
@@ -335,6 +453,11 @@ SV* float_vector_from_k(K k) {
     int i = 0;
 
     for (i = 0; i < k->n; i++) {
+        if (isnan( kF(k)[i] )) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
         av_push(av, newSVnv( kF(k)[i] ) );
     }
 
@@ -344,8 +467,16 @@ SV* float_vector_from_k(K k) {
 SV* symbol_vector_from_k(K k) {
     AV *av = newAV();
     int i = 0;
+    char *sym = NULL;
 
     for (i = 0; i < k->n; i++) {
+        sym = kS(k)[i];
+
+        if (strncmp(sym, "", strlen(sym)) == 0) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
         av_push(av, newSVpv( kS(k)[i], 0 ) );
     }
 

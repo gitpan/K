@@ -24,9 +24,11 @@ if (!defined $c_o || !-f $c_o) {
 checklibs(
     incpath => './q',
     header  => 'k.h',
+    lib     => 'pthread', # not always needed
 );
 
 $pkg->set_inc("-Iq");
+$pkg->set_libs("-lpthread"); # not always needed
 $pkg->add_xs('K.xs');
 $pkg->add_pm(
     './lib/K/Raw.pm' => '$(INST_LIBDIR)/K/Raw.pm',
@@ -43,17 +45,16 @@ makemaker_args(
 name 'K';
 license 'Perl_5';
 perl_version '5.010';
+repository 'http://github.com/wjackson/k-perl';
 all_from 'lib/K/Raw.pm';
 ppport;
 
 configure_requires 'ExtUtils::Depends';
-requires 'Sub::Exporter';
 requires 'Moose';
 requires 'namespace::autoclean';
 test_requires 'File::Which';
 test_requires 'Test::More';
 test_requires 'Test::Exception';
 test_requires 'Test::TCP';
-test_requires 'ok';
 
 WriteAll;
