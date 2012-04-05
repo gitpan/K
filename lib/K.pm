@@ -1,4 +1,7 @@
 package K;
+BEGIN {
+    $K::VERSION = '0.05';
+}
 use Moose;
 use namespace::autoclean;
 use K::Raw;
@@ -115,6 +118,9 @@ K - Perl bindings for k (aka q, aka kdb, aka kx)
     #     bar => ['d', 'e'],
     #   },
     # ]
+
+    # asynchronous command
+    $k->async_cmd( q/([p: (`a;`b)] foo: (`b;`c); bar: (`d;`e))/ );
 
 =head1 DESCRIPTION
 

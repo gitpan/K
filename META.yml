@@ -1,5 +1,5 @@
 ---
-abstract: ~
+abstract: 'Perl bindings for k (aka q, aka kdb, aka kx)'
 author:
   - 'Whitney Jackson C<< <whitney@cpan.org> >>'
 build_requires:
@@ -29,4 +29,4 @@ requires:
   perl: 5.10.0
 resources:
   repository: http://github.com/wjackson/k-perl
-version: 0.04
+version: 0.05
