@@ -5,9 +5,17 @@
 #include "kparse.h"
 #include <string.h>
 
+#define MATH_INT64_NATIVE_IF_AVAILABLE
+#include "perl_math_int64.h"
+
 SV* sv_from_k(K k) {
+
     SV* result;
-    if (k->t < 0) {
+
+    if (k == NULL) {
+        result = &PL_sv_undef;
+    }
+    else if (k->t < 0) {
         result = scalar_from_k(k);
     }
     else if (k->t > 0) {
@@ -48,9 +56,12 @@ SV* scalar_from_k(K k) {
             break;
 
         case KJ: // long
-        case KP: // timestamp
         case KN: // timespan
             result = long_from_k(k);
+            break;
+
+        case KP: // timestamp
+            result = timestamp_from_k(k);
             break;
 
         case KE: // real
@@ -106,9 +117,12 @@ SV* vector_from_k(K k) {
             break;
 
         case KJ: // long
-        case KP: // timestamp
         case KN: // timespan
             result = long_vector_from_k(k);
+            break;
+
+        case KP: // timestamp
+            result = timestamp_vector_from_k(k);
             break;
 
         case KE: // real
@@ -131,6 +145,8 @@ SV* vector_from_k(K k) {
         case XD: // dict or table w/ primary keys
             result = xd_from_k(k);
             break;
+
+        // enumerations (start at 20?) other stuff?
 
         case 100: // function
             return &PL_sv_undef;
@@ -194,7 +210,14 @@ SV* dict_from_k(K k) {
 
     int key_count = av_len(keys) + 1;
 
-    for (i = 0; i < key_count; i++) {
+    /*  k dicts can have the same key multiple times.  When such dicts are
+     *  referenced using a key, the value for the first occurance of the key
+     *  is the one returned.  Perl has the opposite.  Here we go through the
+     *  keys backward to ensure the value for any duplicate keys ends up being
+     *  the value associated with the first occurance of the key as it would
+     *  in k/q.
+     */
+    for (i = key_count -1; i >= 0; i--) {
         key = av_fetch(keys, i, 0);
         val = av_fetch(vals, i, 0);
 
@@ -279,8 +302,23 @@ SV* int_from_k(K k) {
         return newSVpvn("-inf", 4);
     }
 
-    /* return SvREFCNT_inc(newSViv(k->i)); */
     return newSViv(k->i);
+}
+
+SV* timestamp_from_k(K k) {
+    if (k->j == nj) {
+        return &PL_sv_undef;
+    }
+
+    if (k->j == wj) {
+        return newSVpvn("inf", 3);
+    }
+
+    if (k->j == -wj) {
+        return newSVpvn("-inf", 4);
+    }
+
+    return newSVi64(k->j);
 }
 
 SV* long_from_k(K k) {
@@ -296,9 +334,7 @@ SV* long_from_k(K k) {
         return newSVpvn("-inf", 4);
     }
 
-    char buffer[33];
-    snprintf(buffer, 33, "%Ld", k->j);
-    return newSVpv(buffer, 0);
+    return newSVi64(k->j);
 }
 
 SV* real_from_k(K k) {
@@ -416,8 +452,6 @@ SV* int_vector_from_k(K k) {
 }
 
 SV* long_vector_from_k(K k) {
-    char buffer[33];
-
     AV *av = newAV();
     int i = 0;
 
@@ -437,8 +471,33 @@ SV* long_vector_from_k(K k) {
             continue;
         }
 
-        snprintf(buffer, 33, "%Ld", kJ(k)[i]);
-        av_push(av, newSVpv(buffer, 0) );
+        av_push(av, newSVi64(kJ(k)[i]) );
+    }
+
+    return (SV*)av;
+}
+
+SV* timestamp_vector_from_k(K k) {
+    AV *av = newAV();
+    int i = 0;
+
+    for (i = 0; i < k->n; i++) {
+        if (kJ(k)[i] == nj) {
+            av_push(av, &PL_sv_undef);
+            continue;
+        }
+
+        if (kJ(k)[i] == wj) {
+            av_push(av, newSVpvn("inf", 3));
+            continue;
+        }
+
+        if (kJ(k)[i] == -wj) {
+            av_push(av, newSVpvn("-inf", 4));
+            continue;
+        }
+
+        av_push(av, newSVi64(kJ(k)[i]) );
     }
 
     return (SV*)av;

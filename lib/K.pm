@@ -1,6 +1,6 @@
 package K;
 BEGIN {
-    $K::VERSION = '0.05';
+    $K::VERSION = '0.06';
 }
 use Moose;
 use namespace::autoclean;
@@ -66,10 +66,18 @@ sub async_cmd {
     return k(-$self->handle, $cmd);
 }
 
+sub recv {
+    my ($self) = @_;
+
+    return k($self->handle);
+}
+
 sub DEMOLISH {
     my ($self) = @_;
 
-    kclose($self->handle);
+    if ($self->has_handle) {
+        kclose($self->handle);
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -119,8 +127,11 @@ K - Perl bindings for k (aka q, aka kdb, aka kx)
     #   },
     # ]
 
-    # asynchronous command
-    $k->async_cmd( q/([p: (`a;`b)] foo: (`b;`c); bar: (`d;`e))/ );
+    # execute a command asynchronously
+    $k->async_cmd( q/.u.upd[`t; (`foo; 2012.03.27D13:14:15.161718; 1.23)]/ );
+
+    # receive incoming message
+    my $msg = $k->recv;
 
 =head1 DESCRIPTION
 
@@ -133,10 +144,19 @@ L<http://code.kx.com/wiki/Cookbook/InterfacingWithC> .
 C<K>'s OO interface is a thin layer of sugar on top of L<K::Raw> which mimics
 the C library as faithfully as possible.
 
-For now, C<K> returns very simple Perl representations of k values.  For
-example, inside k timestamps are 64-bit ints where the value is the number of
-nanoseconds since 2001.01.01D00:00:00.000 .  For such values, C<K> returns the
-int value as a string (ex: '385906394151617280').  This will probably change.
+C<K> returns simple Perl representations of k values.  For example, inside k
+timestamps are 64-bit ints where the value is the number of nanoseconds since
+2001.01.01D00:00:00.000 .  For such values, C<K> returns the int value (ex:
+385906394151617280).
+
+=head1 32-bit Perl
+
+Several K datatypes are repesented as longs (64-bit ints).  These include
+timestamps, timespans, and actual longs.  Such values become native Perl ints
+if your Perl supports 64-bit ints.  If your Perl doesn't support native 64-bit
+ints then K longs are represented as Math::Int64 objects.  This should be
+transparent but there may be performance or other implications.  The author of
+this module tests almost exclusively with a 64-bit Perl.
 
 =head1 SEE ALSO
 

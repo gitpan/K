@@ -22,9 +22,12 @@ MANIFEST.SKIP
 META.yml
 MYMETA.json
 MYMETA.yml
+perl_math_int64.c
+perl_math_int64.h
 ppport.h
 q/k.h
 t/k.t
 t/QServer.pm
 t/raw.t
+t/subscriber.t
 typemap
