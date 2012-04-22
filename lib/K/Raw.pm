@@ -1,6 +1,6 @@
 package K::Raw;
 BEGIN {
-    $K::Raw::VERSION = '0.06';
+    $K::Raw::VERSION = '0.07';
 }
 use strict;
 use warnings;
@@ -28,9 +28,11 @@ K::Raw - Low-level Perl bindings for k (aka q, aka kdb, aka kx)
 
     my $handle = khpu("localhost", $port, "");
 
+    my $handle = khpun("localhost", $port, "", $timeout_in_millis);
+
     k($handle, '4 + 4'); # 8
 
-    k($handle, q/"abc"/); # [ 'a', 'b', 'c' ]
+    k($handle, q/"abc"/); # ['a', 'b', 'c']
 
     k($handle, q/`foo`bar!(1;2)/); # { foo => 1, bar => 2 }
 

@@ -27,6 +27,7 @@ perl_math_int64.h
 ppport.h
 q/k.h
 t/k.t
+t/q/hang.q
 t/QServer.pm
 t/raw.t
 t/subscriber.t
