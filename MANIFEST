@@ -1,10 +1,8 @@
 build/IFiles.pm
 Changes
-inc/Devel/CheckLib.pm
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
-inc/Module/Install/CheckLib.pm
 inc/Module/Install/Compiler.pm
 inc/Module/Install/Fetch.pm
 inc/Module/Install/Makefile.pm
@@ -25,7 +23,7 @@ MYMETA.yml
 perl_math_int64.c
 perl_math_int64.h
 ppport.h
-q/k.h
+README.pod
 t/k.t
 t/q/hang.q
 t/QServer.pm

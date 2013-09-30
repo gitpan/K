@@ -11,10 +11,9 @@ build_requires:
   Test::More: 0
   Test::TCP: 0
 configure_requires:
-  ExtUtils::Depends: 0
-  ExtUtils::MakeMaker: 6.59
+  ExtUtils::MakeMaker: 0
 dynamic_config: 0
-generated_by: 'Module::Install version 1.06, CPAN::Meta::Converter version 2.120921'
+generated_by: 'ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -22,13 +21,11 @@ meta-spec:
 name: K
 no_index:
   directory:
-    - inc
     - t
+    - inc
 requires:
   Math::Int64: 0
   Moose: 0
   namespace::autoclean: 0
   perl: 5.010
-resources:
-  repository: http://github.com/wjackson/k-perl
-version: 0.08
+version: 0.10

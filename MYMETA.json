@@ -4,7 +4,7 @@
       "Whitney Jackson C<< <whitney@cpan.org> >>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Install version 1.06, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -15,8 +15,8 @@
    "name" : "K",
    "no_index" : {
       "directory" : [
-         "inc",
-         "t"
+         "t",
+         "inc"
       ]
    },
    "prereqs" : {
@@ -33,8 +33,7 @@
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::Depends" : "0",
-            "ExtUtils::MakeMaker" : "6.59"
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "runtime" : {
@@ -47,10 +46,5 @@
       }
    },
    "release_status" : "stable",
-   "resources" : {
-      "repository" : {
-         "url" : "http://github.com/wjackson/k-perl"
-      }
-   },
-   "version" : "0.08"
+   "version" : "0.10"
 }
